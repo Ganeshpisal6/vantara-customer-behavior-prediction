@@ -1,0 +1,15 @@
+services:
+  vantara-dashboard:
+    build: .
+    container_name: vantara-dashboard
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+
+  vantara-api:
+    build: .
+    container_name: vantara-api
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
