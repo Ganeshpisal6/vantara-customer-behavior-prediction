@@ -1,0 +1,12 @@
+Feature,Mean_Absolute_SHAP
+recency,0.5000000000000039
+recency_score,1.398742233149619e-14
+frequency,0.0
+monetary,0.0
+total_quantity,0.0
+average_order_value,0.0
+unique_products,0.0
+frequency_score,0.0
+monetary_score,0.0
+rfm_score,0.0
+clv_score,0.0
