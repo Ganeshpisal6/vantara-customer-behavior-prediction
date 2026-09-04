@@ -35,3 +35,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Local environment / coverage
+lstm_env/
+.coverage
+
+# PostgreSQL local data
+PostgreSQL/

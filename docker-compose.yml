@@ -1,4 +1,5 @@
 services:
+
   vantara-dashboard:
     build: .
     container_name: vantara-dashboard
@@ -12,4 +13,24 @@ services:
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://vantara:vantara@vantara-db:5432/vantara
+    depends_on:
+      - vantara-db
     restart: unless-stopped
+
+  vantara-db:
+    image: postgres:16
+    container_name: vantara-db
+    environment:
+      POSTGRES_USER: vantara
+      POSTGRES_PASSWORD: vantara
+      POSTGRES_DB: vantara
+    ports:
+      - "5432:5432"
+    volumes:
+      - vantara_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  vantara_postgres_data:

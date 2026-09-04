@@ -2,28 +2,23 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
-
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
+from lightgbm import LGBMClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
-
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
+    classification_report,
+    f1_score,
     precision_score,
     recall_score,
-    f1_score,
     roc_auc_score,
-    classification_report
 )
-
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
-
 
 # ============================================================
 # PATHS
@@ -299,7 +294,7 @@ for name, model in models.items():
             best_model_name = name
 
 
-    except Exception as e:
+    except (ValueError, TypeError, RuntimeError) as e:
 
         print(f"\nERROR while training {name}:")
         print(e)

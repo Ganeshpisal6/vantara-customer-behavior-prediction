@@ -1,9 +1,9 @@
-import streamlit as st
-import pandas as pd
-import joblib
-import shap
 from pathlib import Path
 
+import joblib
+import pandas as pd
+import shap
+import streamlit as st
 
 # ============================================================
 # VANTARA - CHURN PREDICTION
@@ -255,5 +255,5 @@ try:
         hide_index=True
     )
 
-except Exception as e:
-    st.warning(f"SHAP explanation error: {e}")
+except Exception as e:  # noqa: BLE001
+    st.warning(f"SHAP explanation error: {e}") 

@@ -1,10 +1,9 @@
 from pathlib import Path
 
 import joblib
+import matplotlib.pyplot as plt
 import pandas as pd
 import shap
-import matplotlib.pyplot as plt
-
 
 # ============================================================
 # PATHS

@@ -1,5 +1,7 @@
 from fastapi import FastAPI
+
 from api.routers import prediction
+
 
 app = FastAPI(
     title="Vantara Customer Behavior Prediction API",

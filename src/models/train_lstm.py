@@ -1,23 +1,19 @@
 from pathlib import Path
 
 import joblib
-import numpy as np
 import pandas as pd
-
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
     accuracy_score,
+    f1_score,
     precision_score,
     recall_score,
-    f1_score,
     roc_auc_score,
 )
-
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.callbacks import EarlyStopping
-
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.models import Sequential
 
 # ============================================================
 # PATHS

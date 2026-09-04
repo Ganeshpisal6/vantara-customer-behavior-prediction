@@ -7,4 +7,6 @@ joblib
 shap
 fastapi
 uvicorn
-python-multipart
+python-multipart  
+sqlalchemy
+psycopg2-binary

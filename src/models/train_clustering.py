@@ -2,11 +2,9 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
-
+from sklearn.cluster import DBSCAN, KMeans
+from sklearn.metrics import davies_bouldin_score, silhouette_score
 from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans, DBSCAN
-from sklearn.metrics import silhouette_score, davies_bouldin_score
-
 
 # ============================================================
 # PATHS

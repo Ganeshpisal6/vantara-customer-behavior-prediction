@@ -1,12 +1,11 @@
 import io
+from pathlib import Path
+
 import joblib
 import pandas as pd
-
-from pathlib import Path
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from api.schemas.customer import CustomerFeatures
-
 
 # ------------------------------------------------------------
 # ROUTER
@@ -91,7 +90,7 @@ def predict_churn(data: CustomerFeatures):
 
 @router.post("/predict/batch")
 async def predict_batch(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...)  # noqa: B008
 ):
 
     # --------------------------------------------------------
@@ -118,7 +117,7 @@ async def predict_batch(
             io.BytesIO(contents)
         )
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
 
         raise HTTPException(
             status_code=400,
@@ -234,4 +233,35 @@ async def predict_batch(
         )
 
     }
-    
+    # ------------------------------------------------------------
+# API METADATA ENDPOINT
+# ------------------------------------------------------------
+
+@router.get("/metadata")
+def api_metadata():
+
+    return {
+        "api_name": "Vantara Customer Behavior Prediction API",
+        "version": "1.0.0",
+        "model": "Decision Tree Classifier",
+        "prediction_type": "Customer Churn Prediction",
+        "supported_endpoints": [
+            "/api/test",
+            "/api/metadata",
+            "/api/predict",
+            "/api/predict/batch"
+        ],
+        "required_features": [
+            "recency",
+            "frequency",
+            "monetary",
+            "total_quantity",
+            "average_order_value",
+            "unique_products",
+            "recency_score",
+            "frequency_score",
+            "monetary_score",
+            "rfm_score",
+            "clv_score"
+        ]
+    }
