@@ -106,3 +106,71 @@ customer-behavior-prediction/
 ├── docker-compose.yml
 ├── requirements.txt
 └── README.md
+## Additional Models
+
+The project also includes the following models required for the Vantara PRD:
+
+- Logistic Regression
+- Decision Tree
+- Random Forest
+- XGBoost
+- LightGBM
+- KNN
+- ANN
+- LSTM
+- Autoencoder
+- K-Means clustering
+- DBSCAN clustering
+
+## Explainability
+
+The project provides model explainability using:
+
+- SHAP global feature importance
+- SHAP customer-level explanations
+- LIME customer-level explanation
+- Partial Dependence Plots (PDP)
+
+## API Endpoints
+
+The FastAPI application provides:
+
+- `GET /`
+- `GET /health`
+- `GET /api/test`
+- `GET /api/metadata`
+- `POST /api/predict`
+- `POST /api/predict/batch`
+
+## Docker Services
+
+Docker Compose provides:
+
+- `vantara-api` — FastAPI REST API
+- `vantara-dashboard` — Streamlit dashboard
+- `vantara-db` — PostgreSQL database
+
+## Testing and Code Quality
+
+The project includes:
+
+- Pytest tests
+- Data leakage tests
+- 5-fold cross-validation
+- Ruff code-quality checks
+- Coverage testing
+
+## Documentation
+
+The `docs/` directory contains:
+
+- Architecture diagram
+- PostgreSQL ER diagram
+- End-to-end workflow diagram
+
+## Running the Application
+
+Start the complete application using:
+
+```bash
+docker compose up --build
