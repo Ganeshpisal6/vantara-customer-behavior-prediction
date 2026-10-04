@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from api.database import Base, engine
 from api.routers import prediction
 
 app = FastAPI(
@@ -8,6 +9,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
+Base.metadata.create_all(bind=engine)
 app.include_router(prediction.router)
 
 
@@ -33,4 +35,4 @@ if __name__ == "__main__":
         host="127.0.0.1",
         port=8000,
         reload=True
-    )
+    ) 

@@ -55,17 +55,15 @@ print(f"Customers loaded: {len(df):,}")
 # ============================================================
 
 features = [
-    "recency",
     "frequency",
     "monetary",
     "total_quantity",
     "average_order_value",
     "unique_products",
-    "recency_score",
     "frequency_score",
     "monetary_score",
     "rfm_score",
-    "clv_score"
+    "clv_score",
 ]
 
 X = df[features].copy()
@@ -87,13 +85,16 @@ print(f"Model loaded: {type(model).__name__}")
 # ============================================================
 
 def predict_probability(data):
-
     data_df = pd.DataFrame(
         data,
         columns=features
     )
 
+    data_df = data_df[features].astype(float)
+
     return model.predict_proba(data_df)
+
+    
 
 
 # ============================================================
@@ -101,6 +102,15 @@ def predict_probability(data):
 # ============================================================
 
 print("\nCreating LIME explainer...")
+X_lime = df[features].copy()
+
+for column in features:
+    X_lime[column] = pd.to_numeric(
+        X_lime[column],
+        errors="coerce"
+    )
+
+X_lime = X_lime.fillna(0).astype(float)
 
 explainer = LimeTabularExplainer(
     X.values,

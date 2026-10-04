@@ -74,19 +74,16 @@ print(df["churn_target"].value_counts())
 # ============================================================
 
 features = [
-    "recency",
     "frequency",
     "monetary",
     "total_quantity",
     "average_order_value",
     "unique_products",
-    "recency_score",
     "frequency_score",
     "monetary_score",
     "rfm_score",
     "clv_score"
 ]
-
 X = df[features]
 
 y = df["churn_target"]

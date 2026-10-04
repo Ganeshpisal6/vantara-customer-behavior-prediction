@@ -20,7 +20,20 @@ PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 print("Loading raw data...")
 
-df = pd.read_excel(RAW_FILE)
+df_2009 = pd.read_excel(
+    RAW_FILE,
+    sheet_name="Year 2009-2010"
+)
+
+df_2010 = pd.read_excel(
+    RAW_FILE,
+    sheet_name="Year 2010-2011"
+)
+
+df = pd.concat(
+    [df_2009, df_2010],
+    ignore_index=True
+)
 
 print(f"Original rows: {len(df):,}")
 
@@ -92,9 +105,14 @@ customer_features = (
             "mean"
         ),
         unique_products=(
-            "stockcode",
-            "nunique"
-        )
+           "stockcode",
+            "nunique",
+        ),
+         last_purchase_date=(
+         "invoicedate",
+          "max",
+        ),
+        
     )
     .reset_index()
 )

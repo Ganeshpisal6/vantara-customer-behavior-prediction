@@ -1,8 +1,11 @@
+import io
 from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
 # Project root
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -396,6 +399,98 @@ st.dataframe(
 )
 
 # ============================================================
+# PDF REPORT FUNCTION
+# ============================================================
+
+def create_pdf_report(data):
+    buffer = io.BytesIO()
+
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    _, height = A4
+
+    pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawString(
+        50,
+        height - 50,
+        "Vantara Customer Intelligence Report"
+    )
+
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(
+        50,
+        height - 70,
+        f"Customers included: {len(data):,}"
+    )
+
+    total_revenue = pd.to_numeric(
+        data["Monetary"],
+        errors="coerce"
+    ).sum()
+
+    average_clv = pd.to_numeric(
+        data["CLV_Score"],
+        errors="coerce"
+    ).mean()
+
+    high_risk = (
+        data["Churn_Status"] == "High Risk"
+    ).sum()
+
+    y = height - 110
+
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(50, y, "Customer Summary")
+
+    y -= 25
+
+    pdf.setFont("Helvetica", 10)
+
+    summary = [
+        f"Total Customers: {len(data):,}",
+        f"Total Revenue: {total_revenue:,.2f}",
+        f"Average CLV: {average_clv:,.2f}",
+        f"High Risk Customers: {high_risk:,}"
+    ]
+
+    for item in summary:
+        pdf.drawString(60, y, item)
+        y -= 20
+
+    y -= 15
+
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(50, y, "Customer Intelligence")
+
+    y -= 25
+    pdf.setFont("Helvetica", 8)
+
+    for _, row in data.head(20).iterrows():
+
+        line = (
+            f"ID: {row['Customer ID']} | "
+            f"Segment: {row['Customer_Segment']} | "
+            f"Churn: {row['Churn_Status']} | "
+            f"CLV: {row['CLV_Score']:.2f}"
+        )
+
+        pdf.drawString(50, y, line)
+        y -= 15
+
+        if y < 50:
+            pdf.showPage()
+            pdf.setFont("Helvetica", 8)
+            y = height - 50
+
+    pdf.save()
+
+    buffer.seek(0)
+
+    return buffer.getvalue()
+
+
+
+
+# ============================================================
 # DOWNLOAD CUSTOMER DATA
 # ============================================================
 
@@ -407,7 +502,14 @@ st.download_button(
     file_name="vantara_customer_data.csv",
     mime="text/csv"
 )
+pdf_data = create_pdf_report(filtered_df)
 
+st.download_button(
+    label="Download PDF Report",
+    data=pdf_data,
+    file_name="vantara_customer_report.pdf",
+    mime="application/pdf"
+)
 # ============================================================
 # CUSTOMER DATA
 # ============================================================
@@ -429,6 +531,85 @@ st.dataframe(
     filtered_df[display_columns],
     use_container_width=True
 )
+
+# ============================================================
+# SHAP CUSTOMER EXPLANATION
+# ============================================================
+
+st.subheader("Customer Churn Explanation (SHAP)")
+
+shap_customer_id = st.text_input(
+    "Enter Customer ID for SHAP explanation",
+    placeholder="Example: 12346",
+    key="shap_customer_id"
+)
+
+if shap_customer_id:
+    shap_customer_id = str(shap_customer_id).strip()
+
+    shap_customer = df[
+        df["Customer ID"].astype(str) == shap_customer_id
+    ]
+
+    if not shap_customer.empty:
+        st.write("Customer found.")
+
+        shap_file = (
+            BASE_DIR
+            / "models_artifacts"
+            / "shap_outputs"
+            / "shap_feature_importance.png"
+        )
+
+        if shap_file.exists():
+            st.image(
+                str(shap_file),
+                caption=f"SHAP Feature Importance — Customer {shap_customer_id}"
+            )
+        else:
+            st.info("SHAP explanation file is not available.")
+    else:
+        st.warning("Customer ID not found.")
+
+
+
+
+# ============================================================
+# REVENUE TREND
+# ============================================================
+
+st.subheader("Revenue Trend")
+
+if "Monetary" in filtered_df.columns:
+    revenue_data = filtered_df.copy()
+
+    revenue_data["Monetary"] = pd.to_numeric(
+        revenue_data["Monetary"], errors="coerce"
+    )
+
+    revenue_data = revenue_data.dropna(subset=["Monetary"])
+
+    if not revenue_data.empty:
+        revenue_summary = pd.DataFrame({
+            "Metric": ["Total Revenue", "Average Revenue per Customer"],
+            "Value": [
+                revenue_data["Monetary"].sum(),
+                revenue_data["Monetary"].mean()
+            ]
+        })
+
+        fig_revenue = px.bar(
+            revenue_summary,
+            x="Metric",
+            y="Value",
+            title="Revenue Overview"
+        )
+
+        st.plotly_chart(fig_revenue, use_container_width=True)
+
+
+
+
 
 # ============================================================
 # STEP 14 - BUSINESS INSIGHTS
@@ -548,6 +729,37 @@ with col3:
         "• Cross-sell products\n\n"
         "• Encourage referrals"
     )
+
+# ============================================================
+# CSV UPLOAD
+# ============================================================
+
+st.subheader("Upload Customer CSV")
+
+uploaded_file = st.file_uploader(
+    "Upload a customer CSV file",
+    type=["csv"],
+    key="customer_csv_upload"
+)
+
+if uploaded_file is not None:
+    try:
+        uploaded_df = pd.read_csv(uploaded_file)
+
+        st.success(
+            f"CSV uploaded successfully: {len(uploaded_df):,} rows"
+        )
+
+        st.dataframe(
+            uploaded_df,
+            use_container_width=True
+        )
+
+    except (ValueError, TypeError, OSError) as e:
+        st.error(f"Unable to read CSV file: {e}")
+
+
+
 
 
 # ============================================================

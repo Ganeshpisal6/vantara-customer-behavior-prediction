@@ -54,21 +54,24 @@ print(f"\nCustomers loaded: {len(df):,}")
 # ============================================================
 
 features = [
-    "recency",
     "frequency",
     "monetary",
     "total_quantity",
     "average_order_value",
     "unique_products",
-    "recency_score",
     "frequency_score",
     "monetary_score",
     "rfm_score",
-    "clv_score"
+    "clv_score",
 ]
+X_pdp = df[features].copy()
 
-X = df[features].copy()
+X_pdp = X_pdp.apply(
+    pd.to_numeric,
+    errors="coerce"
+).fillna(0)
 
+X_pdp = X_pdp.astype(float)
 
 # ============================================================
 # LOAD MODEL
@@ -87,10 +90,10 @@ print(
 # IMPORTANT FEATURES
 # ============================================================
 
-important_features = [
-    "recency",
+features_to_plot = [
     "frequency",
-    "clv_score"
+    "monetary",
+    "total_quantity",
 ]
 
 
@@ -99,24 +102,24 @@ important_features = [
 # ============================================================
 
 
-for feature in important_features:
+for feature in features_to_plot:
 
     print(f"Creating PDP for: {feature}")
 
     feature_index = features.index(feature)
 
     result = partial_dependence(
-        model,
-        X,
-        [feature_index],
-        grid_resolution=20
-    )
+    model,
+    X_pdp,
+    [feature],
+    kind="average"
+)
 
     # Your scikit-learn version returns:
     # (average_predictions, grid_values)
 
-    average = result[0][0]
-    grid = result[1][0]
+    average = result["average"][0]
+    grid = result["values"][0]
 
     plt.figure(figsize=(8, 6))
 
@@ -169,7 +172,7 @@ print(
 
 print("\nCreated:")
 
-for feature in important_features:
+for feature in features_to_plot:
 
     print(
         f"- pdp_{feature}.png"

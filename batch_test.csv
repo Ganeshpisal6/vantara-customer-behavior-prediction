@@ -1,0 +1,3 @@
+customer_id,recency,frequency,monetary,total_quantity,average_order_value,unique_products,recency_score,frequency_score,monetary_score,rfm_score,clv_score
+10001,30,8,5000,300,625,40,4,4,4,12,1000
+10002,365,2,500,20,250,5,1,1,1,3,50

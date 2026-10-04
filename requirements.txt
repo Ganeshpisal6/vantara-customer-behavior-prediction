@@ -10,3 +10,5 @@ uvicorn
 python-multipart  
 sqlalchemy
 psycopg2-binary
+xgboost
+reportlab

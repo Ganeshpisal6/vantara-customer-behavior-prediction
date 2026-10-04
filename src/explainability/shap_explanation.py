@@ -2,6 +2,7 @@ from pathlib import Path
 
 import joblib
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import shap
 
@@ -30,10 +31,7 @@ OUTPUT_DIR = (
     / "shap_outputs"
 )
 
-OUTPUT_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================================
@@ -44,32 +42,33 @@ print("=" * 60)
 print("VANTARA - SHAP EXPLAINABILITY")
 print("=" * 60)
 
-print("\nLoading dataset...")
-
 df = pd.read_csv(DATA_FILE)
 
-print(f"Customers loaded: {len(df):,}")
+print(f"\nCustomers loaded: {len(df):,}")
 
 
 # ============================================================
-# FEATURES
+# CURRENT XGBOOST MODEL FEATURES
 # ============================================================
 
 features = [
-    "recency",
     "frequency",
     "monetary",
     "total_quantity",
     "average_order_value",
     "unique_products",
-    "recency_score",
     "frequency_score",
     "monetary_score",
     "rfm_score",
-    "clv_score"
+    "clv_score",
 ]
 
 X = df[features].copy()
+
+for column in features:
+    X[column] = pd.to_numeric(X[column], errors="coerce")
+
+X = X.fillna(0)
 
 
 # ============================================================
@@ -84,73 +83,35 @@ print(f"Model loaded: {type(model).__name__}")
 
 
 # ============================================================
-# SAMPLE DATA
+# SHAP EXPLAINER
 # ============================================================
 
-# Use a sample for faster SHAP calculation
+print("\nCreating SHAP explainer...")
 
-sample_size = min(
-    500,
-    len(X)
-)
+explainer = shap.TreeExplainer(model)
+
+
+# ============================================================
+# SAMPLE FOR GLOBAL SHAP
+# ============================================================
+
+sample_size = min(500, len(X))
 
 X_sample = X.sample(
     n=sample_size,
     random_state=42
 )
 
-
-# ============================================================
-# HANDLE PIPELINE MODELS
-# ============================================================
-
-model_for_shap = model
-X_for_shap = X_sample
-
-if hasattr(model, "named_steps"):
-
-    print("\nPipeline detected.")
-
-    model_for_shap = model.named_steps[
-        "model"
-    ]
-
-    scaler = model.named_steps.get(
-        "scaler"
-    )
-
-    if scaler is not None:
-
-        X_for_shap = scaler.transform(
-            X_sample
-        )
+shap_values = explainer.shap_values(X_sample)
 
 
 # ============================================================
-# CREATE SHAP EXPLAINER
-# ============================================================
-
-print("\nCreating SHAP explainer...")
-
-explainer = shap.TreeExplainer(
-    model_for_shap
-)
-
-shap_values = explainer.shap_values(
-    X_for_shap
-)
-
-
-# ============================================================
-# HANDLE BINARY CLASSIFICATION OUTPUT
+# HANDLE SHAP OUTPUT
 # ============================================================
 
 if isinstance(shap_values, list):
-
     shap_values_positive = shap_values[1]
-
 else:
-
     shap_values_positive = shap_values
 
 
@@ -160,10 +121,7 @@ else:
 
 print("\nCalculating global feature importance...")
 
-mean_abs_shap = abs(
-    shap_values_positive
-).mean(axis=0)
-
+mean_abs_shap = abs(shap_values_positive).mean(axis=0)
 
 importance_df = pd.DataFrame({
     "Feature": features,
@@ -174,18 +132,6 @@ importance_df = importance_df.sort_values(
     by="Mean_Absolute_SHAP",
     ascending=False
 )
-
-
-print("\nSHAP Feature Importance:")
-
-print(
-    importance_df.to_string(
-        index=False
-    )
-)
-
-
-# Save feature importance
 
 importance_file = (
     OUTPUT_DIR
@@ -202,13 +148,13 @@ importance_df.to_csv(
 # SHAP SUMMARY PLOT
 # ============================================================
 
-print("\nCreating SHAP summary plot...")
+print("Creating SHAP summary plot...")
 
 plt.figure()
 
 shap.summary_plot(
     shap_values_positive,
-    X_for_shap,
+    X_sample,
     feature_names=features,
     show=False
 )
@@ -232,13 +178,13 @@ plt.close()
 # SHAP BAR PLOT
 # ============================================================
 
-print("Creating SHAP bar plot...")
+print("Creating SHAP feature importance plot...")
 
 plt.figure()
 
 shap.summary_plot(
     shap_values_positive,
-    X_for_shap,
+    X_sample,
     feature_names=features,
     plot_type="bar",
     show=False
@@ -260,107 +206,122 @@ plt.close()
 
 
 # ============================================================
-# INDIVIDUAL CUSTOMER EXPLANATIONS
+# CUSTOMER-SPECIFIC SHAP FUNCTION
 # ============================================================
+def create_customer_shap(customer_id):
+    """
+    Create a SHAP explanation for a specific customer ID.
+    """
 
-print("\nCreating individual customer explanations...")
+    customer_id = str(customer_id).strip()
 
-
-# Select first 3 representative customers
-representative_rows = X_sample.iloc[:3]
-
-
-for position in range(3):
-
-    # Get original row position
-    sample_index = representative_rows.index[position]
-
-    # Get customer ID
-    customer_id = df.loc[
-        sample_index,
-        "customer_id"
-    ]
-
-    print(
-        f"Creating explanation {position + 1} "
-        f"for customer {customer_id}"
+    customer_mask = (
+        df["customer_id"]
+        .astype(str)
+        .str.replace(".0", "", regex=False)
+        == customer_id
     )
 
+    customer_rows = df.loc[customer_mask]
 
-    # Get feature row
-    row = representative_rows.iloc[
-        position
-    ]
+    if customer_rows.empty:
+        print(f"Customer {customer_id} not found.")
+        return None
 
+    customer_row = customer_rows.iloc[0]
 
-    # Get transformed row for SHAP
-    if hasattr(X_for_shap, "iloc"):
+    X_customer = customer_row[features].to_frame().T
 
-        row_transformed = X_for_shap.iloc[
-            position
-        ].values
+    for column in features:
+        X_customer[column] = pd.to_numeric(
+            X_customer[column],
+            errors="coerce"
+        )
 
-    else:
+    X_customer = X_customer.fillna(0).astype(float)
+    customer_shap = explainer.shap_values(X_customer)
 
-        row_transformed = X_for_shap[
-            position
-        ]
+    if isinstance(customer_shap, list):
+        customer_shap = customer_shap[1]
 
+    customer_shap = np.asarray(customer_shap).reshape(-1)
 
-    # Get SHAP values
-    row_shap = shap_values_positive[
-        position
-    ]
-
-
-    # Get expected value
     expected_value = explainer.expected_value
 
-    if hasattr(expected_value, "__len__"):
-
-        base_value = expected_value[1]
-
+    if isinstance(expected_value, (list, np.ndarray)):
+        base_value = float(np.asarray(expected_value).reshape(-1)[0])
     else:
+        base_value = float(expected_value)
 
-        base_value = expected_value
-
-
-    # Create SHAP explanation
     explanation = shap.Explanation(
-        values=row_shap,
+        values=customer_shap,
         base_values=base_value,
-        data=row_transformed,
+        data=np.asarray(X_customer.iloc[0]).reshape(-1),
         feature_names=features
     )
 
+    output_file = (
+        OUTPUT_DIR
+        / f"customer_{customer_id}_shap.png"
+    )
 
-    # Create waterfall plot
-    plt.figure()
-
+    plt.figure(figsize=(10, 6))
     shap.plots.waterfall(
         explanation,
+        max_display=len(features),
         show=False
     )
-
+    plt.title(f"SHAP Explanation — Customer {customer_id}")
     plt.tight_layout()
-
-
-    customer_file = (
-        OUTPUT_DIR
-        / f"customer_explanation_{position + 1}.png"
-    )
-
-
-    plt.savefig(
-        customer_file,
-        bbox_inches="tight"
-    )
-
+    plt.savefig(output_file, dpi=150, bbox_inches="tight")
     plt.close()
 
+    print(f"Saved customer SHAP explanation: {output_file}")
+
+    return output_file
 
 # ============================================================
-# SAVE SHAP VALUES
+# REQUIRED REPRESENTATIVE CUSTOMERS
+# ============================================================
+
+print("\nCreating representative customer explanations...")
+
+available_customers = (
+    df["customer_id"]
+    .astype(str)
+    .str.replace(".0", "", regex=False)
+)
+
+representative_ids = []
+
+for customer_id in ["12346", "12347", "12348"]:
+
+    if customer_id in available_customers.values:
+
+        representative_ids.append(customer_id)
+
+
+# If those IDs are unavailable, use first available customers
+if len(representative_ids) < 3:
+
+    for value in available_customers:
+
+        if value not in representative_ids:
+
+            representative_ids.append(value)
+
+        if len(representative_ids) == 3:
+
+            break
+
+
+for customer_id in representative_ids:
+
+    create_customer_shap(customer_id)
+
+
+# ============================================================
+# SAVE SAMPLE SHAP VALUES
 # ============================================================
 
 shap_values_df = pd.DataFrame(
@@ -388,61 +349,17 @@ print("SHAP EXPLAINABILITY COMPLETED")
 print("=" * 60)
 
 print(
-    f"\nSHAP outputs saved to:\n"
-    f"{OUTPUT_DIR}"
+    f"\nSHAP outputs saved to:\n{OUTPUT_DIR}"
 )
 
-print(
-    "\nCreated:"
-    "\n- shap_feature_importance.csv"
-    "\n- shap_summary.png"
-    "\n- shap_feature_importance.png"
-    "\n- customer_explanation_1.png"
-    "\n- customer_explanation_2.png"
-    "\n- customer_explanation_3.png"
-    "\n- shap_values.csv"
-)
+print("\nCreated:")
+print("- shap_feature_importance.csv")
+print("- shap_summary.png")
+print("- shap_feature_importance.png")
+print("- shap_values.csv")
 
-# ============================================================
-# SAVE SHAP VALUES
-# ============================================================
+for customer_id in representative_ids:
 
-shap_values_df = pd.DataFrame(
-    shap_values_positive,
-    columns=features
-)
-
-shap_values_file = (
-    OUTPUT_DIR
-    / "shap_values.csv"
-)
-
-shap_values_df.to_csv(
-    shap_values_file,
-    index=False
-)
-
-
-# ============================================================
-# FINAL OUTPUT
-# ============================================================
-
-print("\n" + "=" * 60)
-print("SHAP EXPLAINABILITY COMPLETED")
-print("=" * 60)
-
-print(
-    f"\nSHAP outputs saved to:\n"
-    f"{OUTPUT_DIR}"
-)
-
-print(
-    "\nCreated:"
-    "\n- shap_feature_importance.csv"
-    "\n- shap_summary.png"
-    "\n- shap_feature_importance.png"
-    "\n- customer_explanation_1.png"
-    "\n- customer_explanation_2.png"
-    "\n- customer_explanation_3.png"
-    "\n- shap_values.csv"
-)
+    print(
+        f"- customer_{customer_id}_shap.png"
+    )

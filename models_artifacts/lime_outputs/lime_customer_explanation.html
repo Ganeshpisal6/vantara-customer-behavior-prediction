@@ -37089,25 +37089,25 @@
 /***/ })
 /******/ ]);
 //# sourceMappingURL=bundle.js.map </script></head><body>
-        <div class="lime top_div" id="top_divPUMG4LH5O9BA8BU"></div>
+        <div class="lime top_div" id="top_divFOM84BHTXKP6DCM"></div>
         
         <script>
-        var top_div = d3.select('#top_divPUMG4LH5O9BA8BU').classed('lime top_div', true);
+        var top_div = d3.select('#top_divFOM84BHTXKP6DCM').classed('lime top_div', true);
         
             var pp_div = top_div.append('div')
                                 .classed('lime predict_proba', true);
             var pp_svg = pp_div.append('svg').style('width', '100%');
-            var pp = new lime.PredictProba(pp_svg, ["Low Risk", "High Risk"], [0.0, 1.0]);
+            var pp = new lime.PredictProba(pp_svg, ["Low Risk", "High Risk"], [0.38184499740600586, 0.6181550025939941]);
             
         
         var exp_div;
             var exp = new lime.Explanation(["Low Risk", "High Risk"]);
         
                 exp_div = top_div.append('div').classed('lime explanation', true);
-                exp.show([["recency > 136.00", 0.6785017045777592], ["frequency_score > 4.00", -0.023320299288046867], ["frequency > 5.00", -0.02292118834126999], ["total_quantity <= 158.00", -0.02234510733924567], ["17.00 < unique_products <= 38.00", 0.01878564929319314], ["11.11 < average_order_value <= 17.35", -0.016461847425737808], ["4.47 < clv_score <= 32.28", -0.011204209231932648], ["307.99 < monetary <= 706.02", -0.009161650605839608], ["recency_score <= 2.00", 0.007820499958030762], ["6.00 < rfm_score <= 9.00", 0.0045444198932252725]], 1, exp_div);
+                exp.show([["clv_score > 378.62", -0.6361656956278068], ["frequency > 7.00", 0.20461212842709525], ["monetary > 2307.09", 0.2043816668954878], ["monetary_score > 4.00", 0.03622460913448089], ["frequency_score > 4.00", 0.030100712356896524], ["total_quantity > 1376.00", 0.01993973225130252], ["average_order_value > 24.20", 0.017243706575915903], ["9.00 < rfm_score <= 12.00", -0.015179116107414776], ["19.00 < unique_products <= 45.00", -0.008091738736980665]], 1, exp_div);
                 
         var raw_div = top_div.append('div');
-            exp.show_raw_tabular([["recency", "165.00", 0.6785017045777592], ["frequency_score", "5.00", -0.023320299288046867], ["frequency", "11.00", -0.02292118834126999], ["total_quantity", "70.00", -0.02234510733924567], ["unique_products", "26.00", 0.01878564929319314], ["average_order_value", "11.30", -0.016461847425737808], ["clv_score", "24.71", -0.011204209231932648], ["monetary", "372.86", -0.009161650605839608], ["recency_score", "2.00", 0.007820499958030762], ["rfm_score", "9.00", 0.0045444198932252725]], 1, raw_div);
+            exp.show_raw_tabular([["clv_score", "2846.11", -0.6361656956278068], ["frequency", "12.00", 0.20461212842709525], ["monetary", "77556.46", 0.2043816668954878], ["monetary_score", "5.00", 0.03622460913448089], ["frequency_score", "5.00", 0.030100712356896524], ["total_quantity", "74285.00", 0.01993973225130252], ["average_order_value", "2281.07", 0.017243706575915903], ["rfm_score", "12.00", -0.015179116107414776], ["unique_products", "27.00", -0.008091738736980665]], 1, raw_div);
         
         </script>
         </body></html>
